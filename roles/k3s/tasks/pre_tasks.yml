@@ -1,0 +1,31 @@
+# code:language=ansible
+---
+- name: Installing k3s
+  tags:
+    - never
+    - install
+    - pre_tasks
+  block:
+    - name: Ensure swap is off
+      ansible.builtin.command: swapoff -a
+      register: swapoff_output
+      changed_when: swapoff_output.rc != 0
+
+    - name: Disable swap permanently
+      ansible.builtin.replace:
+        path: /etc/fstab
+        regexp: '^(.*swap.*)$'
+        replace: '# \1'
+
+    - name: Update APT cache
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install dependencies
+      ansible.builtin.apt:
+        name:
+          - curl
+          - sudo
+          - apt-transport-https
+          - ca-certificates
+        state: present

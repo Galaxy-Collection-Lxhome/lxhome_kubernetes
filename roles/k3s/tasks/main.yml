@@ -1,0 +1,15 @@
+# code:language=ansible
+---
+- name: Install/check the pre-requisites
+  ansible.builtin.include_tasks: pre_tasks.yml
+  tags:
+    - pre_tasks
+    - install
+    - never
+
+- name: Including tasks for the NGINX install
+  ansible.builtin.include_tasks: install_k3s.yml
+  tags:
+    - install_k3s
+    - install
+    - never

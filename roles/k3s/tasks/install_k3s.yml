@@ -1,0 +1,30 @@
+# code:language=ansible
+---
+- name: Installing k3s
+  tags:
+    - never
+    - install
+    - install_k3s
+  block:
+    - name: Install k3s agent
+      ansible.builtin.shell: |
+        curl -sfL {{ k3s_install_script }} | K3S_URL={{ k3s_server_url }} K3S_TOKEN={{ k3s_node_token }} sh -
+      args:
+        executable: /bin/bash
+      handlers: Ensure k3s agent is enabled and running
+
+    - name: Verify node is ready (wait for registration)
+      ansible.builtin.shell: |
+        until kubectl get nodes | grep -q $(hostname); do sleep 5; done
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+      args:
+        executable: /bin/bash
+
+    - name: Label node (optional, for workload scheduling)
+      ansible.builtin.shell: |
+        kubectl label node $(hostname) role=agent --overwrite
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+      args:
+        executable: /bin/bash
