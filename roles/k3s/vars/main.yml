@@ -1,5 +1,5 @@
 ---
 # vars file for k3s
-k3s_server_url: "https://<SERVER_IP>:6443"
-k3s_node_token: "<NODE_TOKEN>"
-k3s_install_script: "https://get.k3s.io"
+# k3s_server_url: "https://<SERVER_IP>:6443"
+# k3s_node_token: "<NODE_TOKEN>"
+# k3s_install_script: "https://get.k3s.io"

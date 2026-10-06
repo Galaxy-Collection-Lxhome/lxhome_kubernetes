@@ -7,7 +7,7 @@
     - install
     - never
 
-- name: Including tasks for the NGINX install
+- name: Including tasks for the k3s install
   ansible.builtin.include_tasks: install_k3s.yml
   tags:
     - install_k3s

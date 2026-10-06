@@ -1,0 +1,28 @@
+---
+- name: Install/check the pre-requisites
+  ansible.builtin.include_tasks: pre_install.yml
+  tags:
+    - configure_k8s
+    - k8s_full_install
+    - never
+
+- name: Including tasks for the common k8s install
+  ansible.builtin.include_tasks: install_k8s.yml
+  tags:
+    - k8s_full_install
+    - never
+
+- name: Include tasks for Control Plane setup
+  ansible.builtin.include_tasks: control_plane.yml
+  when: inventory_hostname in groups['control_plane']
+  tags:
+    - k8s_full_install
+    - kubeadm_init
+    - never
+
+- name: Include tasks for Worker setup
+  ansible.builtin.include_tasks: worker.yml
+  when: inventory_hostname in groups['workers']
+  tags:
+    - k8s_full_install
+    - never

@@ -11,7 +11,12 @@
         curl -sfL {{ k3s_install_script }} | K3S_URL={{ k3s_server_url }} K3S_TOKEN={{ k3s_node_token }} sh -
       args:
         executable: /bin/bash
-      handlers: Ensure k3s agent is enabled and running
+
+    - name: Ensure k3s agent is enabled and running
+      ansible.builtin.systemd:
+        name: k3s-agent
+        enabled: true
+        state: started
 
     - name: Verify node is ready (wait for registration)
       ansible.builtin.shell: |

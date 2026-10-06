@@ -1,0 +1,59 @@
+# code:language=ansible
+---
+- name: Getting the required packets and installing the k8s
+  tags:
+    - never
+    - k8s_full_install
+  block:
+    - name: Install required prerequisites
+      ansible.builtin.apt:
+        name:
+          - containerd
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gpg
+        state: present
+        update_cache: true
+    
+    - name: Download Kubernetes GPG key
+      ansible.builtin.get_url:
+        url: https://pkgs.k8s.io/core:/stable:/v1.33/deb/Release.key
+        dest: /tmp/kubernetes-release.key
+        mode: '0644'
+
+    - name: Dearmor Kubernetes GPG key
+      ansible.builtin.command: >
+        gpg --dearmor --yes -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg /tmp/kubernetes-release.key
+      args:
+        creates: /etc/kubernetes-apt-keyring.gpg
+
+    - name: Add Kubernetes apt repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.33/deb/ /"
+        state: present
+        filename: kubernetes
+
+    - name: Install Kubernetes binaries
+      ansible.builtin.apt:
+        name:
+          - kubelet
+          - kubectl
+          - kubeadm
+        state: present
+        update_cache: true
+
+    - name: Hold Kubernetes package versions
+      ansible.builtin.dpkg_selections:
+        name: "{{ item }}"
+        selection: hold
+      loop:
+        - kubelet
+        - kubectl
+        - kubeadm
+
+    - name: Enable containerd service
+      ansible.builtin.systemd:
+        name: containerd
+        enabled: true
+        state: started

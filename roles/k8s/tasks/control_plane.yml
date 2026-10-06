@@ -1,0 +1,50 @@
+# code:language=ansible
+---
+- name: Initalizing the control plane with the Kudeadm
+  tags:
+    - never
+    - kubeadm_init
+    - k8s_full_install
+  block:
+    - name: Check if Kubernetes control plane is already initialized
+      ansible.builtin.stat:
+        path: /etc/kubernetes/admin.conf
+      register: kubeadmin_conf
+
+    - name: Initialize Kubernetes Control Plane
+      ansible.builtin.command: >
+        kubeadm init
+        --apiserver-advertise-address={{ hostvars[inventory_hostname]['ansible_host'] }}
+        --pod-network-cidr=10.244.0.0/16
+      when: not kubeadmin_conf.stat.exists
+
+    - name: Create .kube directory for root
+      ansible.builtin.file:
+        path: /root/.kube
+        state: directory
+        mode: '0755'
+
+    - name: Copy admin.conf to root .kube config
+      ansible.builtin.copy:
+        src: /etc/kubernetes/admin.conf
+        dest: /root/.kube/config
+        remote_src: true
+        mode: '0600'
+
+    - name: Deploy Flannel CNI
+      ansible.builtin.command: >
+        kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+      environment:
+        KUBECONFIG: /root/.kube/config
+
+    - name: Generate join command
+      ansible.builtin.command: kubeadm token create --print-join-command
+      register: join_command_raw
+      changed_when: false
+
+    - name: Set join command fact globally
+      ansible.builtin.set_fact:
+        k8s_join_command: "{{ join_command_raw.stdout }}"
+      delegate_to: "{{ item }}"
+      delegate_facts: true
+      loop: "{{ groups['workers'] }}"

@@ -1,6 +1,5 @@
 # code:language=ansible
 ---
-# handlers file for k3s
 - name: Ensure k3s agent is enabled and running
   ansible.builtin.systemd:
     name: k3s-agent
