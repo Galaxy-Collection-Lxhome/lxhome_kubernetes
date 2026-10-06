@@ -4,18 +4,7 @@
   tags:
     - never
     - k8s_full_install
-  block:
-    - name: Install required prerequisites
-      ansible.builtin.apt:
-        name:
-          - containerd
-          - apt-transport-https
-          - ca-certificates
-          - curl
-          - gpg
-        state: present
-        update_cache: true
-    
+  block:    
     - name: Download Kubernetes GPG key
       ansible.builtin.get_url:
         url: https://pkgs.k8s.io/core:/stable:/v1.33/deb/Release.key

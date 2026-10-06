@@ -25,4 +25,13 @@
   when: inventory_hostname in groups['workers']
   tags:
     - k8s_full_install
+    - check_worker
+    - never
+
+- name: Include tasks to setup the ingress controller
+  ansible.builtin.include_tasks: setup_ingress.yml
+  when: inventory_hostname in groups['control_plane']
+  tags:
+    - k8s_full_install
+    - setup_ingress
     - never

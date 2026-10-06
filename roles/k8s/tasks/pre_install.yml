@@ -6,6 +6,17 @@
     - configure_k8s
     - k8s_full_install
   block:
+    - name: Install required prerequisites
+      ansible.builtin.apt:
+        name:
+          - containerd
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gpg
+        state: present
+        update_cache: true
+        
     - name: Disable swap for current session
       ansible.builtin.command: swapoff -a
       when: ansible_swaptotal_mb > 0
