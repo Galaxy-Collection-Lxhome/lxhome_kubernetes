@@ -16,7 +16,7 @@
           - gpg
         state: present
         update_cache: true
-        
+
     - name: Disable swap for current session
       ansible.builtin.command: swapoff -a
       when: ansible_swaptotal_mb > 0
@@ -56,7 +56,7 @@
         - { key: 'net.bridge.bridge-nf-call-ip6tables', value: '1' }
         - { key: 'net.ipv4.ip_forward', value: '1' }
 
-    - name: Ensuring the /etc/containerd and /etc/apt/keyrings directory exist
+    - name: Ensuring the /etc/containerd , /etc/apt/keyrings and /usr/lib/cni directory exist in all nodes
       ansible.builtin.file:
         path: "{{ item }}"
         state: directory
@@ -64,6 +64,13 @@
       loop:
         - /etc/containerd
         - /etc/apt/keyrings
+        - /usr/lib/cni
+
+    - name: Sync /opt/cni/bin binaries to /usr/lib/cni
+      ansible.builtin.shell: >
+        cp -rn /opt/cni/bin/* /usr/lib/cni/
+      args:
+        creates: /usr/lib/cni/loopback
 
     - name: Generate default containerd configuration
       ansible.builtin.shell: containerd config default > /etc/containerd/config.toml
