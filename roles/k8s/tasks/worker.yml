@@ -4,7 +4,7 @@
   tags:
     - never
     - k8s_full_install
-    - check_worker
+    - kubeadm_init
   block:
     - name: Check if node has already joined cluster
       ansible.builtin.stat:
