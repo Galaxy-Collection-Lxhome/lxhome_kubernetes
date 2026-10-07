@@ -25,7 +25,7 @@
   when: inventory_hostname in groups['workers']
   tags:
     - k8s_full_install
-    - check_worker
+    - kubeadm_init
     - never
 
 - name: Include tasks to setup the ingress controller
