@@ -58,7 +58,7 @@
             namespace: metallb-system
           spec:
             addresses:
-              - "{{ metallb_ip_range | default('192.168.8.200-192.168.8.220') }}"
+              - "{{ metallb_ip_range | default( {{ VARS_IP_RANGE_FOR_INGRESS }} ) }}"
         state: present
 
     - name: Configure MetalLB L2 Advertisement
