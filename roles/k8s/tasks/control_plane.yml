@@ -11,10 +11,14 @@
         path: /etc/kubernetes/admin.conf
       register: kubeadmin_conf
 
+    - name: Print all adapters' ipv4 addresses
+      ansible.builtin.debug:
+        msg: "{{ ansible_facts.VARS_ADAPTER_NAME.ipv4.address }}"
+
     - name: Initialize Kubernetes Control Plane
       ansible.builtin.command: >
         kubeadm init
-        --apiserver-advertise-address={{ ansible_default_ipv4.address }}
+        --apiserver-advertise-address={{ ansible_facts.VARS_ADAPTER_NAME.ipv4.address }}
         --pod-network-cidr=10.244.0.0/16
       when: not kubeadmin_conf.stat.exists
 
