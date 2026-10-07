@@ -52,3 +52,12 @@
       delegate_to: "{{ item }}"
       delegate_facts: true
       loop: "{{ groups['workers'] }}"
+    
+    - name: Adding an alias k for kubectl to .bashrc
+      ansible.builtin.lineinfile:
+        path: /root/.bashrc
+        line: "alias k='kubectl'"
+        state: present
+        owner: "root"
+        insertafter: EOF
+        create: true
