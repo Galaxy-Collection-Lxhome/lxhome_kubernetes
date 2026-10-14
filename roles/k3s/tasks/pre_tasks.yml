@@ -1,27 +1,29 @@
-# code:language=ansible
 ---
-- name: Installing k3s
+- name: Pre-tasks for k3s
   tags:
     - never
-    - install
+    - k3s_full_install
+    - k3s_init_control_plane
+    - k3s_agent_install
     - pre_tasks
   block:
+    - name: Check active swap
+      ansible.builtin.command: swapon --show
+      register: swap_status
+      changed_when: false
+
     - name: Ensure swap is off
       ansible.builtin.command: swapoff -a
-      register: swapoff_output
-      changed_when: swapoff_output.rc != 0
+      when: swap_status.stdout != ""
+      changed_when: true
 
-    - name: Disable swap permanently
+    - name: Disable swap permanently in /etc/fstab
       ansible.builtin.replace:
         path: /etc/fstab
         regexp: '^(.*swap.*)$'
         replace: '# \1'
 
-    - name: Update APT cache
-      ansible.builtin.apt:
-        update_cache: true
-
-    - name: Install dependencies
+    - name: Update APT cache and install dependencies
       ansible.builtin.apt:
         name:
           - curl
@@ -29,3 +31,30 @@
           - apt-transport-https
           - ca-certificates
         state: present
+        update_cache: true
+    
+    - name: Echo hostname
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }}"
+      when: inventory_hostname in groups['k3s_control_plane']
+
+    - name: Read k3s agent token from server
+      ansible.builtin.slurp:
+        src: /var/lib/rancher/k3s/server/agent-token
+      register: k3s_node_token
+      delegate_to: "{{ inventory_hostname }}"
+      when: inventory_hostname in groups['k3s_control_plane']
+    
+    - name: Print the token
+      ansible.builtin.debug:
+        msg: "{{ k3s_node_token.content }}"
+      when: 
+        - inventory_hostname in groups['k3s_control_plane']
+        - k3s_node_token.content is defined
+    
+    - name: Set decoded k3s token as a fact
+      ansible.builtin.set_fact:
+        k3s_token_decoded: "{{ k3s_node_token['content'] | b64decode | trim }}"
+      when: 
+        - inventory_hostname in groups['k3s_control_plane']
+        - k3s_node_token.content is defined
