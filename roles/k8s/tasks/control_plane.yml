@@ -17,11 +17,7 @@
 
     - name: Printing all adapters' ipv4 addresses
       ansible.builtin.debug:
-<<<<<<< HEAD
         msg: "{{ ansible_facts.ens18.ipv4.address }}"
-=======
-        msg: "{{ ansible_facts.enp0s8.ipv4.address }}"
->>>>>>> 97eb5ea66a044949ff139b5dd1457f969c03a99d
 
     - name: Initialize Kubernetes Control Plane
       ansible.builtin.command: >
