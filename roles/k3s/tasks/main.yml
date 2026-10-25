@@ -7,7 +7,6 @@
     - k3s_full_install
     - k3s_agent_install
     - k3s_init_control_plane
->>>>>>> 97eb5ea66a044949ff139b5dd1457f969c03a99d
     - never
 
 - name: Including tasks for the k3s control-plane install
