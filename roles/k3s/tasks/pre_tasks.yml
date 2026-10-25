@@ -32,29 +32,54 @@
           - ca-certificates
         state: present
         update_cache: true
-    
-    - name: Echo hostname
-      ansible.builtin.debug:
-        msg: "{{ inventory_hostname }}"
-      when: inventory_hostname in groups['k3s_control_plane']
+
+    - name: Check if k3s agent service is active
+      ansible.builtin.command: systemctl is-active k3s.service
+      register: kubectl_status
+      failed_when: false
+      changed_when: false
+
+    - name: Printing the status of the service
+      ansible.builtin.debug: 
+        msg: "{{ kubectl_status.stdout }}"
 
     - name: Read k3s agent token from server
       ansible.builtin.slurp:
         src: /var/lib/rancher/k3s/server/agent-token
       register: k3s_node_token
       delegate_to: "{{ inventory_hostname }}"
-      when: inventory_hostname in groups['k3s_control_plane']
+      when: 
+        - kubectl_status.stdout == "active"
+        - inventory_hostname in groups['k3s_control_plane']
     
     - name: Print the token
       ansible.builtin.debug:
         msg: "{{ k3s_node_token.content }}"
       when: 
+        - kubectl_status.stdout == "active"
         - inventory_hostname in groups['k3s_control_plane']
         - k3s_node_token.content is defined
     
     - name: Set decoded k3s token as a fact
       ansible.builtin.set_fact:
         k3s_token_decoded: "{{ k3s_node_token['content'] | b64decode | trim }}"
-      when: 
+      delegate_to: "{{ item }}"
+      delegate_facts: true
+      loop: "{{ groups['k3s_agent'] }}"
+      when:
+        - kubectl_status.stdout == "active"
         - inventory_hostname in groups['k3s_control_plane']
         - k3s_node_token.content is defined
+    
+    - name: Adding an alias k for kubectl to .bashrc
+      ansible.builtin.lineinfile:
+        path: /root/.bashrc
+        line: "alias k='kubectl'"
+        state: present
+        owner: "root"
+        insertafter: EOF
+        create: true
+      delegate_to: "{{ inventory_hostname }}"
+      when:
+        - inventory_hostname in groups['k3s_control_plane']
+    
