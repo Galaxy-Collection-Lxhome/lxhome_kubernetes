@@ -6,7 +6,7 @@
     - k3s_agent_install
   block:
     - name: Check if k3s agent service is active
-      ansible.builtin.command: systemctl is-active k3s-agent
+      ansible.builtin.command: systemctl is-active k3s-agent.service
       register: k3s_agent_status
       failed_when: false
       changed_when: false
@@ -14,19 +14,41 @@
     - name: Print the token
       ansible.builtin.debug:
         msg: "{{ k3s_token_decoded }}"
-      when:
-        - k3s_token_decoded.content is defined
 
-    - name: Install k3s agent
+    - name: Run official k3s agent installation script (offline mode)
       ansible.builtin.shell: |
-        curl -sfL {{ k3s_install_script | default('https://get.k3s.io') }} | K3S_URL={{ k3s_API_server_FQDN }} K3S_TOKEN={{ k3s_node_token }} sh -
+        curl -sfL https://get.k3s.io | K3S_URL={{ k3s_API_server_FQDN }} K3S_TOKEN={{ k3s_token_decoded }} sh -
       args:
         executable: /bin/bash
-      when: k3s_agent_status.rc != 0
       changed_when: true
+
+    - name: Ensure /usr/local/bin directory exists on agents
+      ansible.builtin.file:
+        path: /usr/local/bin
+        state: directory
+        mode: '0755'
+
+    - name: Create k3s configuration directory on agent
+      ansible.builtin.file:
+        path: /etc/rancher/k3s
+        state: directory
+        mode: '0755'
+
+    - name: Render k3s agent config file from template
+      ansible.builtin.template:
+        src: config.yaml.j2
+        dest: /etc/rancher/k3s/config.yaml
+        mode: '0600'
+
+    - name: Render k3s-agent systemd service file from template
+      ansible.builtin.template:
+        src: k3s-agent.service.j2
+        dest: /etc/systemd/system/k3s-agent.service
+        mode: '0644'
 
     - name: Ensure k3s agent is enabled and running
       ansible.builtin.systemd:
         name: k3s-agent
+        daemon_reload: true
         enabled: true
-        state: started
+        state: restarted
