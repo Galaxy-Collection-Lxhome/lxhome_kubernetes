@@ -4,9 +4,6 @@
   ansible.builtin.include_tasks: pre_tasks.yml
   tags:
     - pre_tasks
-<<<<<<< HEAD
-    - install_k3s
-=======
     - k3s_full_install
     - k3s_agent_install
     - k3s_init_control_plane
